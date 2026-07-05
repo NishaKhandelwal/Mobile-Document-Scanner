@@ -114,6 +114,22 @@ The document scanner follows a simple image processing pipeline:
 
 ---
 
+## 🚧 Roadmap
+
+- [x] Automatic document detection
+- [x] Perspective correction
+- [x] Scanner effect
+
+### In Progress
+
+- [ ] Improved edge detection
+- [ ] Multiple scan modes
+- [ ] OCR support
+- [ ] PDF export
+- [ ] Desktop GUI
+- [ ] Webcam scanning
+- [ ] Batch processing
+
 ## 🎯 Learning Outcomes
 
 This project helped in understanding:
