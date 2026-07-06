@@ -1,12 +1,23 @@
-"""
-Entry point for Smart Document Scanner.
-"""
+from src.scanner import DocumentScanner
+
 
 def main():
-    print("=" * 45)
-    print(" Smart Document Scanner ")
-    print("=" * 45)
-    print("Project initialized successfully.")
+
+    scanner = DocumentScanner()
+
+    scanner.load_image("images/input/document.jpg")
+
+    scanner.preprocess()
+
+    scanner.detect_edges()
+
+    scanner.find_document()
+
+    scanner.scan()
+
+    scanner.save()
+
+    scanner.show()
 
 
 if __name__ == "__main__":
