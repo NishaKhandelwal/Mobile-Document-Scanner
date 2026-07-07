@@ -1,7 +1,7 @@
 from src.scanner import DocumentScanner
+import config
 
-
-def main():
+def main(): 
 
     scanner = DocumentScanner()
 
@@ -14,6 +14,9 @@ def main():
     scanner.find_document()
 
     scanner.scan()
+
+    if config.DEBUG:
+        scanner.show_debug()
 
     scanner.save()
 
