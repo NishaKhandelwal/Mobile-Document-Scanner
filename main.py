@@ -11,12 +11,12 @@ def main():
 
     scanner.detect_edges()
 
-    if config.DEBUG:
-        scanner.show_debug()
-
     scanner.find_document()
 
     scanner.scan()
+
+    if config.DEBUG:
+        scanner.show_debug()
 
     scanner.save()
 
