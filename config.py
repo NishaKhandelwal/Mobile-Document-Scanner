@@ -16,3 +16,16 @@ THRESHOLD_OFFSET = 10
 
 # Output Directory
 OUTPUT_DIR = "images/output"
+
+# Morphology
+
+KERNEL_SIZE = (3, 3)
+
+DILATE_ITERATIONS = 1
+
+ERODE_ITERATIONS = 1
+
+
+# Debug
+
+DEBUG = True

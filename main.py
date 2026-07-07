@@ -1,7 +1,7 @@
 from src.scanner import DocumentScanner
+import config
 
-
-def main():
+def main(): 
 
     scanner = DocumentScanner()
 
@@ -10,6 +10,9 @@ def main():
     scanner.preprocess()
 
     scanner.detect_edges()
+
+    if config.DEBUG:
+        scanner.show_debug()
 
     scanner.find_document()
 

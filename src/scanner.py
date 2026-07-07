@@ -53,6 +53,10 @@ def preprocess(self):
         cv2.COLOR_BGR2GRAY
     )
 
+    # Improve contrast
+
+    self.gray = cv2.equalizeHist(self.gray)
+
     self.gray = cv2.GaussianBlur(
         self.gray,
         config.GAUSSIAN_KERNEL,
@@ -61,9 +65,41 @@ def preprocess(self):
 def detect_edges(self):
 
     self.edged = cv2.Canny(
+
         self.gray,
+
         config.CANNY_LOW,
+
         config.CANNY_HIGH
+
+    )
+
+    kernel = np.ones(
+
+        config.KERNEL_SIZE,
+
+        np.uint8
+
+    )
+
+    self.edged = cv2.dilate(
+
+        self.edged,
+
+        kernel,
+
+        iterations=config.DILATE_ITERATIONS
+
+    )
+
+    self.edged = cv2.erode(
+
+        self.edged,
+
+        kernel,
+
+        iterations=config.ERODE_ITERATIONS
+
     )
 def find_document(self):
 
@@ -97,7 +133,9 @@ def find_document(self):
 
             return
 
-    raise Exception("Document not found.")
+    raise RuntimeError(
+    "Unable to detect document. Try another image."
+)
 def scan(self):
 
     self.scanned = four_point_transform(
@@ -145,6 +183,17 @@ def show(self):
     cv2.imshow("Original", self.original)
 
     cv2.imshow("Scanned", self.scanned)
+
+    cv2.waitKey(0)
+
+    cv2.destroyAllWindows()
+def show_debug(self):
+
+    cv2.imshow("Original", self.image)
+
+    cv2.imshow("Gray", self.gray)
+
+    cv2.imshow("Edges", self.edged)
 
     cv2.waitKey(0)
 
