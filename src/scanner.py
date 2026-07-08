@@ -239,12 +239,21 @@ class DocumentScanner:
 
             cv2.putText(
                 debug,
-                f"{candidate.score:.1f}",
+                f"Score: {candidate.score:.1f}",
                 (x, y - 10),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.6,
                 color,
                 2
+            )
+            cv2.putText(
+                debug,
+                f"Area: {int(area)}",
+                (x, y + 20),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                color,
+                1
             )
 
             if (
