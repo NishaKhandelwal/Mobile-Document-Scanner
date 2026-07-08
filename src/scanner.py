@@ -16,12 +16,14 @@ Pipeline
 
 import os
 import cv2
+from datetime import datetime
 import imutils
 import numpy as np
 from skimage.filters import threshold_local
 
 import config
 from src.transform import four_point_transform
+from src.document_detector import score_contour
 
 
 class DocumentScanner:
@@ -185,7 +187,9 @@ class DocumentScanner:
 
         contours = imutils.grab_contours(contours)
 
-        print(f"Found {len(contours)} contours")
+        print(f"\nFound {len(contours)} contours")
+
+        image_area = self.image.shape[0] * self.image.shape[1]
 
         debug = self.image.copy()
 
@@ -195,73 +199,79 @@ class DocumentScanner:
             reverse=True
         )
 
-        for i, contour in enumerate(contours[:10]):
+        best_candidate = None
+
+        for i, contour in enumerate(contours):
 
             area = cv2.contourArea(contour)
 
-            print(f"Contour {i+1}: area = {area}")
+            candidate = score_contour(
+                contour,
+                image_area
+            )
+
+            if candidate is None:
+                continue
+
+            print(
+                f"Contour {i+1} | "
+                f"Area = {int(area)} | "
+                f"Score = {candidate.score:.2f}"
+            )
+
+            color = (0, 255, 0)
+
+            if candidate.score > 70:
+                color = (0, 255, 255)
+
+            if candidate.score > 85:
+                color = (0, 0, 255)
 
             cv2.drawContours(
                 debug,
-                [contour],
+                [candidate.contour],
                 -1,
-                (0,255,0),
+                color,
                 2
             )
 
-        cv2.imwrite("images/output/debug_contours.jpg", debug)
+            x, y, w, h = cv2.boundingRect(candidate.contour)
 
-        image_area = self.image.shape[0] * self.image.shape[1]
-
-        for contour in contours:
-
-            area = cv2.contourArea(contour)
-
-            if area < image_area * config.MIN_DOCUMENT_AREA:
-                continue
-
-            perimeter = cv2.arcLength(contour, True)
-
-            approx = cv2.approxPolyDP(
-                contour,
-                config.POLYGON_APPROX_EPSILON * perimeter,
-                True
+            cv2.putText(
+                debug,
+                f"{candidate.score:.1f}",
+                (x, y - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                color,
+                2
             )
 
-            if len(approx) == 4:
+            if (
+                best_candidate is None or
+                candidate.score > best_candidate.score
+            ):
+                best_candidate = candidate
 
-                self.document_contour = approx
+        self.contour_image = debug
 
-                self.contour_image = debug
+        cv2.imwrite(
+            "images/output/debug_contours.jpg",
+            debug
+        )
 
-                return
-            # Fallback: use the largest contour's bounding rectangle
-        if len(contours) > 0:
-            largest = contours[0]
+        if best_candidate is None:
 
-            x, y, w, h = cv2.boundingRect(largest)
-
-            self.document_contour = np.array([
-                [[x, y]],
-                [[x + w, y]],
-                [[x + w, y + h]],
-                [[x, y + h]]
-            ], dtype=np.int32)
-
-            self.contour_image = self.image.copy()
-
-            cv2.drawContours(
-                self.contour_image,
-                [self.document_contour],
-                -1,
-                (0, 255, 0),
-                3
+            raise RuntimeError(
+                "Unable to detect document."
             )
 
-            return
-            
+        self.document_contour = best_candidate.approx
 
-        raise RuntimeError("Unable to detect document.")
+        print(
+            f"\nSelected contour "
+            f"(Score = {best_candidate.score:.2f})"
+        )
         # --------------------------------------------------
 
     def scan(self):
