@@ -21,6 +21,7 @@ import imutils
 import numpy as np
 from skimage.filters import threshold_local
 from src.quality import ImageQuality
+from src.document_detector import score_contour
 import config
 from src.transform import four_point_transform
 from src.document_detector import score_contour
@@ -86,55 +87,53 @@ class DocumentScanner:
     # --------------------------------------------------
 
     def preprocess(self):
-        """
-        Image enhancement before edge detection.
-        """
+            """
+            Enhance the image before document detection.
+            """
 
-        if self.image is None:
-            raise RuntimeError("Load an image first.")
+            if self.image is None:
+                raise RuntimeError("Load an image first.")
 
-        # Convert to grayscale
+            # Convert to grayscale
+            self.gray = cv2.cvtColor(
+                self.image,
+                cv2.COLOR_BGR2GRAY
+            )
 
-        self.gray = cv2.cvtColor(
-            self.image,
-            cv2.COLOR_BGR2GRAY
-        )
+            # Improve local contrast using CLAHE
+            clahe = cv2.createCLAHE(
+                clipLimit=config.CLAHE_CLIP_LIMIT,
+                tileGridSize=config.CLAHE_GRID_SIZE
+            )
 
-        # CLAHE (better than equalizeHist)
+            self.enhanced = clahe.apply(self.gray)
 
-        clahe = cv2.createCLAHE(
-            clipLimit=config.CLAHE_CLIP_LIMIT,
-            tileGridSize=config.CLAHE_GRID_SIZE
-        )
-        self.quality = ImageQuality(
-            self.enhanced
-        )
+            # Reduce noise
+            self.enhanced = cv2.GaussianBlur(
+                self.enhanced,
+                config.GAUSSIAN_KERNEL,
+                0
+            )
 
-        self.enhanced = clahe.apply(self.gray)
+            # Sharpen image
+            blurred = cv2.GaussianBlur(
+                self.enhanced,
+                (0, 0),
+                3
+            )
 
-        # Noise reduction
+            self.enhanced = cv2.addWeighted(
+                self.enhanced,
+                1.5,
+                blurred,
+                -0.5,
+                0
+            )
 
-        self.enhanced = cv2.GaussianBlur(
-            self.enhanced,
-            config.GAUSSIAN_KERNEL,
-            0
-        )
-
-        # Sharpen image
-
-        blurred = cv2.GaussianBlur(
-            self.enhanced,
-            (0, 0),
-            3
-        )
-
-        self.enhanced = cv2.addWeighted(
-            self.enhanced,
-            1.5,
-            blurred,
-            -0.5,
-            0
-        )
+            # Analyze image quality
+            self.quality = ImageQuality(
+                self.enhanced
+            )
     # --------------------------------------------------
 
     def detect_edges(self):
@@ -182,110 +181,96 @@ class DocumentScanner:
         cv2.imwrite("images/output/debug_gray.jpg", self.enhanced)
 
     def find_document(self):
+            """
+            Detect the document using contour scoring.
+            """
 
-        contours = cv2.findContours(
-            self.edged.copy(),
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE
-        )
-
-        contours = imutils.grab_contours(contours)
-
-        print(f"\nFound {len(contours)} contours")
-
-        image_area = self.image.shape[0] * self.image.shape[1]
-
-        debug = self.image.copy()
-
-        contours = sorted(
-            contours,
-            key=cv2.contourArea,
-            reverse=True
-        )
-
-        best_candidate = None
-
-        for i, contour in enumerate(contours):
-
-            area = cv2.contourArea(contour)
-
-            candidate = score_contour(
-                contour,
-                image_area
+            contours = cv2.findContours(
+                self.edged.copy(),
+                cv2.RETR_EXTERNAL,
+                cv2.CHAIN_APPROX_SIMPLE
             )
 
-            if candidate is None:
-                continue
+            contours = imutils.grab_contours(contours)
 
-            print(
-                f"Contour {i+1} | "
-                f"Area = {int(area)} | "
-                f"Score = {candidate.score:.2f}"
+            print(f"\nFound {len(contours)} contours")
+
+            # Sort largest first
+            contours = sorted(
+                contours,
+                key=cv2.contourArea,
+                reverse=True
             )
 
-            color = (0, 255, 0)
+            image_area = self.image.shape[0] * self.image.shape[1]
 
-            if candidate.score > 70:
-                color = (0, 255, 255)
+            best_candidate = None
 
-            if candidate.score > 85:
+            debug = self.image.copy()
+
+            # Evaluate every contour
+            for i, contour in enumerate(contours):
+
+                area = cv2.contourArea(contour)
+
+                print(f"Contour {i+1}: area = {int(area)}")
+
+                candidate = score_contour(
+                    contour,
+                    image_area
+                )
+
                 color = (0, 0, 255)
 
+                if candidate is not None:
+
+                    color = (0, 255, 0)
+
+                    if (
+                        best_candidate is None or
+                        candidate.score > best_candidate.score
+                    ):
+                        best_candidate = candidate
+
+                cv2.drawContours(
+                    debug,
+                    [contour],
+                    -1,
+                    color,
+                    2
+                )
+
+            self.contour_image = debug
+
+            cv2.imwrite(
+                "images/output/debug_contours.jpg",
+                debug
+            )
+
+            if best_candidate is None:
+                raise RuntimeError(
+                    "Unable to detect document."
+                )
+
+            self.document_contour = best_candidate.approx
+
+            print("\nSelected Document")
+
+            print(
+                f"Score : {best_candidate.score:.2f}"
+            )
+
+            print(
+                f"Area  : {int(cv2.contourArea(best_candidate.contour))}"
+            )
+
             cv2.drawContours(
-                debug,
-                [candidate.contour],
+                self.contour_image,
+                [self.document_contour],
                 -1,
-                color,
-                2
+                (255, 0, 0),
+                4
             )
-
-            x, y, w, h = cv2.boundingRect(candidate.contour)
-
-            cv2.putText(
-                debug,
-                f"Score: {candidate.score:.1f}",
-                (x, y - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                color,
-                2
-            )
-            cv2.putText(
-                debug,
-                f"Area: {int(area)}",
-                (x, y + 20),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                color,
-                1
-            )
-
-            if (
-                best_candidate is None or
-                candidate.score > best_candidate.score
-            ):
-                best_candidate = candidate
-
-        self.contour_image = debug
-
-        cv2.imwrite(
-            "images/output/debug_contours.jpg",
-            debug
-        )
-
-        if best_candidate is None:
-
-            raise RuntimeError(
-                "Unable to detect document."
-            )
-
-        self.document_contour = best_candidate.approx
-
-        print(
-            f"\nSelected contour "
-            f"(Score = {best_candidate.score:.2f})"
-        )
-        # --------------------------------------------------
 
     def scan(self):
         """

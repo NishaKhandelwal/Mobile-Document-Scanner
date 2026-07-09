@@ -1,39 +1,36 @@
-"""
-document_detector.py
-
-Scores every contour and returns the most likely document.
-
-Instead of taking the first contour with four points,
-we evaluate multiple geometric properties.
-"""
+from dataclasses import dataclass
 
 import cv2
 import numpy as np
 
 
-class DocumentCandidate:
+@dataclass
+class ContourCandidate:
 
-    def __init__(self, contour):
+    contour: np.ndarray
 
-        self.contour = contour
+    approx: np.ndarray
 
-        self.area = cv2.contourArea(contour)
-
-        self.score = 0
-
-        self.approx = None
+    score: float
 
 
 def score_contour(contour, image_area):
+    """
+    Score how likely a contour is to be a document.
 
-    candidate = DocumentCandidate(contour)
+    Higher score = better document candidate.
+    """
 
-    candidate.area = cv2.contourArea(contour)
+    area = cv2.contourArea(contour)
 
-    if candidate.area < image_area * 0.02:
+    # Ignore very small contours
+    if area < image_area * 0.10:
         return None
 
-    perimeter = cv2.arcLength(contour, True)
+    perimeter = cv2.arcLength(
+        contour,
+        True
+    )
 
     approx = cv2.approxPolyDP(
         contour,
@@ -41,95 +38,28 @@ def score_contour(contour, image_area):
         True
     )
 
-    candidate.approx = approx
-
-    score = 0
-
-    # -------------------------
-    # Area
-    # -------------------------
-
-    area_ratio = candidate.area / image_area
-
-    score += min(area_ratio * 30, 30)
-
-    # -------------------------
-    # Number of corners
-    # -------------------------
-
-    if len(approx) == 4:
-        score += 20
-
-    elif len(approx) == 5:
-        score += 12
-
-    elif len(approx) == 6:
-        score += 6
-
-    # -------------------------
-    # Convex
-    # -------------------------
-
-    if cv2.isContourConvex(approx):
-        score += 10
-
-    # -------------------------
-    # Bounding rectangle
-    # -------------------------
+    # Documents should have four corners
+    if len(approx) != 4:
+        return None
 
     x, y, w, h = cv2.boundingRect(approx)
 
-    ratio = w / float(h)
+    aspect_ratio = w / float(h)
 
-    if 0.5 <= ratio <= 2.2:
-        score += 10
+    rectangularity = area / (w * h)
 
-    # -------------------------
-    # Solidity
-    # -------------------------
+    area_score = area / image_area
 
-    hull = cv2.convexHull(contour)
+    ratio_score = 1 - abs(1.4 - aspect_ratio)
 
-    hull_area = cv2.contourArea(hull)
-
-    if hull_area > 0:
-
-        solidity = candidate.area / hull_area
-
-        score += solidity * 10
-
-    # -------------------------
-    # Extent
-    # -------------------------
-
-    rect_area = w * h
-
-    if rect_area > 0:
-
-        extent = candidate.area / rect_area
-
-        score += extent * 10
-
-    # -------------------------
-    # Rectangle fill
-    # -------------------------
-
-    rectangle = np.array([
-        [[x, y]],
-        [[x + w, y]],
-        [[x + w, y + h]],
-        [[x, y + h]]
-    ])
-
-    overlap = cv2.matchShapes(
-        approx,
-        rectangle,
-        cv2.CONTOURS_MATCH_I1,
-        0
+    score = (
+        area_score * 2
+        + rectangularity
+        + ratio_score
     )
 
-    score += max(0, 10 - overlap * 20)
-
-    candidate.score = round(score, 2)
-
-    return candidate
+    return ContourCandidate(
+        contour=contour,
+        approx=approx,
+        score=score
+    )
