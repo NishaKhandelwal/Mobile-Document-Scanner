@@ -20,7 +20,7 @@ from datetime import datetime
 import imutils
 import numpy as np
 from skimage.filters import threshold_local
-
+from src.quality import ImageQuality
 import config
 from src.transform import four_point_transform
 from src.document_detector import score_contour
@@ -53,6 +53,7 @@ class DocumentScanner:
 
         # Resize ratio
         self.ratio = 1.0
+        self.quality = None
 
     # --------------------------------------------------
 
@@ -104,6 +105,9 @@ class DocumentScanner:
         clahe = cv2.createCLAHE(
             clipLimit=config.CLAHE_CLIP_LIMIT,
             tileGridSize=config.CLAHE_GRID_SIZE
+        )
+        self.quality = ImageQuality(
+            self.enhanced
         )
 
         self.enhanced = clahe.apply(self.gray)
@@ -438,6 +442,38 @@ class DocumentScanner:
         bottom = np.hstack(images[3:])
 
         dashboard = np.vstack((top, bottom))
+        if self.quality:
+            report = self.quality.get_report()
+
+            cv2.putText(
+                dashboard,
+                f"Blur: {report['blur']}",
+                (20, dashboard.shape[0] - 70),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 0),
+                2
+            )
+
+            cv2.putText(
+                dashboard,
+                f"Brightness: {report['brightness']}",
+                (20, dashboard.shape[0] - 40),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 0),
+                2
+            )
+
+            cv2.putText(
+                dashboard,
+                f"Contrast: {report['contrast']}",
+                (20, dashboard.shape[0] - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 0),
+                2
+            )
 
         cv2.imshow(
             "Document Scanner Pipeline",
