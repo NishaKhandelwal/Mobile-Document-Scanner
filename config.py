@@ -107,3 +107,14 @@ LOW_BLUR = 120
 
 CLAHE_CLIP_LOW = 2.0
 CLAHE_CLIP_HIGH = 4.0
+# ---------------------------------------
+# Scan Modes
+# ---------------------------------------
+
+SCAN_MODE = "bw"
+
+SCAN_MODES = {
+    "bw",
+    "gray",
+    "color"
+}

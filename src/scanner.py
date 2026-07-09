@@ -290,29 +290,42 @@ class DocumentScanner:
         a scanner-like black & white image.
         """
 
-        if self.document_contour is None:
-            raise RuntimeError("Document contour not found.")
-
-        self.scanned = four_point_transform(
+        warped = four_point_transform(
             self.original,
             self.document_contour.reshape(4, 2) * self.ratio
         )
 
-        self.scanned = cv2.cvtColor(
-            self.scanned,
-            cv2.COLOR_BGR2GRAY
-        )
+        mode = config.SCAN_MODE.lower()
 
-        threshold = threshold_local(
-            self.scanned,
-            config.THRESHOLD_BLOCK_SIZE,
-            offset=config.THRESHOLD_OFFSET,
-            method="gaussian"
-        )
+        if mode == "color":
 
-        self.scanned = (
-            self.scanned > threshold
-        ).astype("uint8") * 255
+            self.scanned = warped
+
+        elif mode == "gray":
+
+            self.scanned = cv2.cvtColor(
+                warped,
+                cv2.COLOR_BGR2GRAY
+            )
+
+        else:
+
+            gray = cv2.cvtColor(
+                warped,
+                cv2.COLOR_BGR2GRAY
+            )
+
+            threshold = threshold_local(
+                gray,
+                config.THRESHOLD_BLOCK_SIZE,
+                offset=config.THRESHOLD_OFFSET,
+                method="gaussian"
+            )
+
+            self.scanned = (
+                gray > threshold
+            ).astype("uint8") * 255
+        print(f"Scan Mode: {config.SCAN_MODE.upper()}")   
         # --------------------------------------------------
 
     def save(self, filename=None):
@@ -352,13 +365,17 @@ class DocumentScanner:
 
     def show(self):
 
-        if self.scanned is None:
-            raise RuntimeError("Nothing to display.")
+        cv2.imshow(
+            "Original",
+            self.original
+        )
 
-        cv2.imshow("Scanned Document", self.scanned)
+        cv2.imshow(
+            "Scanned",
+            self.scanned
+        )
 
         cv2.waitKey(0)
-
         cv2.destroyAllWindows()
         # --------------------------------------------------
 
