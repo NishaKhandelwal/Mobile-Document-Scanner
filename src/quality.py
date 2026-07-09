@@ -58,3 +58,31 @@ class ImageQuality:
             "contrast": round(self.contrast, 2)
 
         }
+    def enhancement_parameters(report):
+        """
+        Decide preprocessing parameters
+        based on image quality.
+        """
+
+        clip_limit = 2.5
+        sharpen = 1.5
+
+        if report["brightness"] < 80:
+            clip_limit = 4.0
+
+        elif report["brightness"] > 190:
+            clip_limit = 2.0
+
+        if report["blur"] < 120:
+            sharpen = 2.0
+
+        if report["contrast"] < 30:
+            clip_limit += 0.5
+
+        return {
+
+            "clip_limit": clip_limit,
+
+            "sharpen": sharpen
+
+        }

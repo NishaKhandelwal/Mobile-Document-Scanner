@@ -20,7 +20,10 @@ from datetime import datetime
 import imutils
 import numpy as np
 from skimage.filters import threshold_local
-from src.quality import ImageQuality
+from src.quality import (
+    ImageQuality,
+    enhancement_parameters
+)
 from src.document_detector import score_contour
 import config
 from src.transform import four_point_transform
@@ -100,9 +103,16 @@ class DocumentScanner:
                 cv2.COLOR_BGR2GRAY
             )
 
-            # Improve local contrast using CLAHE
+            quality = ImageQuality(self.gray)
+
+            report = quality.get_report()
+
+            params = enhancement_parameters(report)
+
             clahe = cv2.createCLAHE(
-                clipLimit=config.CLAHE_CLIP_LIMIT,
+
+                clipLimit=params["clip_limit"],
+
                 tileGridSize=config.CLAHE_GRID_SIZE
             )
 
@@ -122,11 +132,13 @@ class DocumentScanner:
                 3
             )
 
+            amount = params["sharpen"]
+
             self.enhanced = cv2.addWeighted(
                 self.enhanced,
-                1.5,
+                amount,
                 blurred,
-                -0.5,
+                -(amount - 1),
                 0
             )
 
@@ -458,6 +470,23 @@ class DocumentScanner:
                 0.7,
                 (255, 255, 0),
                 2
+            )
+            cv2.putText(
+
+                dashboard,
+
+                "Adaptive Enhancement",
+
+                (dashboard.shape[1]-260,30),
+
+                cv2.FONT_HERSHEY_SIMPLEX,
+
+                0.8,
+
+                (0,255,255),
+
+                2
+
             )
 
         cv2.imshow(

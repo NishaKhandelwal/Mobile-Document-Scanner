@@ -94,3 +94,16 @@ SUPPORTED_EXTENSIONS = (
     ".tif",
     ".tiff",
 )
+# ---------------------------------------
+# Adaptive Image Enhancement
+# ---------------------------------------
+
+LOW_BRIGHTNESS = 80
+HIGH_BRIGHTNESS = 190
+
+LOW_CONTRAST = 30
+
+LOW_BLUR = 120
+
+CLAHE_CLIP_LOW = 2.0
+CLAHE_CLIP_HIGH = 4.0
