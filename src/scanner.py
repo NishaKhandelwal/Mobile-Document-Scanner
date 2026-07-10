@@ -46,6 +46,7 @@ class DocumentScanner:
         # Processing stages
         self.gray = None
         self.enhanced = None
+        self.corrected=None
         self.edged = None
         self.contour_image = None
 
@@ -294,7 +295,7 @@ class DocumentScanner:
             self.original,
             self.document_contour.reshape(4, 2) * self.ratio
         )
-        corrected = self.remove_shadows(warped)
+        self.corrected = self.remove_shadows(warped)
 
         mode = config.SCAN_MODE.lower()
         
@@ -305,19 +306,19 @@ class DocumentScanner:
 
         elif mode == "gray":
 
-            self.scanned = corrected
+            self.scanned = self.corrected
 
         else:
 
             threshold = threshold_local(
-                corrected,
+                self.corrected,
                 config.THRESHOLD_BLOCK_SIZE,
                 offset=config.THRESHOLD_OFFSET,
                 method="gaussian"
             )
 
             self.scanned = (
-                corrected > threshold
+                self.corrected > threshold
             ).astype("uint8") * 255
         print(f"Scan Mode: {config.SCAN_MODE.upper()}")   
         # --------------------------------------------------
@@ -354,22 +355,22 @@ class DocumentScanner:
         )
 
         # Normalize illumination
-        corrected = cv2.divide(
+        self.corrected = cv2.divide(
             gray,
             background,
             scale=255
         )
 
         # Stretch intensity range
-        corrected = cv2.normalize(
-            corrected,
+        self.corrected = cv2.normalize(
+            self.corrected,
             None,
             0,
             255,
             cv2.NORM_MINMAX
         )
 
-        return corrected
+        return self.corrected
     def save(self, filename=None):
         """
         Save scanned document.
@@ -422,16 +423,14 @@ class DocumentScanner:
         # --------------------------------------------------
 
     def show_debug(self):
+        """
+        Display the complete document scanner processing pipeline.
+        """
 
         if self.image is None:
             return
 
         original = self.image.copy()
-
-        gray = cv2.cvtColor(
-            self.gray,
-            cv2.COLOR_GRAY2BGR
-        )
 
         enhanced = cv2.cvtColor(
             self.enhanced,
@@ -443,16 +442,29 @@ class DocumentScanner:
             cv2.COLOR_GRAY2BGR
         )
 
+        if self.corrected is not None:
+            corrected = cv2.cvtColor(
+                self.corrected,
+                cv2.COLOR_GRAY2BGR
+            )
+        else:
+            corrected = np.zeros_like(original)
+
         if self.contour_image is not None:
             contour = self.contour_image.copy()
         else:
             contour = original.copy()
 
         if self.scanned is not None:
-            scanned = cv2.cvtColor(
-                self.scanned,
-                cv2.COLOR_GRAY2BGR
-            )
+
+            if len(self.scanned.shape) == 2:
+                scanned = cv2.cvtColor(
+                    self.scanned,
+                    cv2.COLOR_GRAY2BGR
+                )
+            else:
+                scanned = self.scanned.copy()
+
         else:
             scanned = np.zeros_like(original)
 
@@ -460,8 +472,8 @@ class DocumentScanner:
 
         images = [
             original,
-            gray,
             enhanced,
+            corrected,
             edges,
             contour,
             scanned
@@ -474,8 +486,8 @@ class DocumentScanner:
 
         labels = [
             "Original",
-            "Gray",
             "Enhanced",
+            "Corrected",
             "Edges",
             "Contour",
             "Final Scan"
@@ -494,11 +506,12 @@ class DocumentScanner:
             )
 
         top = np.hstack(images[:3])
-
         bottom = np.hstack(images[3:])
 
         dashboard = np.vstack((top, bottom))
+
         if self.quality:
+
             report = self.quality.get_report()
 
             cv2.putText(
@@ -530,22 +543,15 @@ class DocumentScanner:
                 (255, 255, 0),
                 2
             )
+
             cv2.putText(
-
                 dashboard,
-
                 "Adaptive Enhancement",
-
-                (dashboard.shape[1]-260,30),
-
+                (dashboard.shape[1] - 260, 30),
                 cv2.FONT_HERSHEY_SIMPLEX,
-
                 0.8,
-
-                (0,255,255),
-
+                (0, 255, 255),
                 2
-
             )
 
         cv2.imshow(
@@ -554,5 +560,4 @@ class DocumentScanner:
         )
 
         cv2.waitKey(0)
-
         cv2.destroyAllWindows()
