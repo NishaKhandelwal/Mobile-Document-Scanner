@@ -63,6 +63,9 @@ POLYGON_APPROX_EPSILON = 0.03
 # Adaptive Threshold parameters
 THRESHOLD_BLOCK_SIZE = 11
 THRESHOLD_OFFSET = 10
+# Large Gaussian kernel used for estimating page illumination.
+# Must be odd numbers.
+BACKGROUND_BLUR_KERNEL = (31, 31)
 
 
 # ==========================================================

@@ -327,7 +327,55 @@ class DocumentScanner:
             ).astype("uint8") * 255
         print(f"Scan Mode: {config.SCAN_MODE.upper()}")   
         # --------------------------------------------------
+    def remove_shadows(self, image):
+        """
+        Correct uneven illumination in a scanned document.
 
+        A large Gaussian blur estimates the background illumination.
+        The original image is then normalized against this background
+        using OpenCV's divide operation.
+
+        Parameters
+        ----------
+        image : numpy.ndarray
+            Perspective-corrected document image.
+
+        Returns
+        -------
+        numpy.ndarray
+            Grayscale image with more uniform illumination.
+        """
+
+        # Convert to grayscale if required
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image.copy()
+
+        # Estimate illumination background
+        background = cv2.GaussianBlur(
+            gray,
+            config.BACKGROUND_BLUR_KERNEL,
+            0
+        )
+
+        # Normalize illumination
+        corrected = cv2.divide(
+            gray,
+            background,
+            scale=255
+        )
+
+        # Stretch intensity range
+        corrected = cv2.normalize(
+            corrected,
+            None,
+            0,
+            255,
+            cv2.NORM_MINMAX
+        )
+
+        return corrected
     def save(self, filename=None):
         """
         Save scanned document.
