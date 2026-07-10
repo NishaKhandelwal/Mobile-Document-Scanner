@@ -20,7 +20,11 @@ from datetime import datetime
 import imutils
 import numpy as np
 from skimage.filters import threshold_local
-
+from src.quality import (
+    ImageQuality,
+    enhancement_parameters
+)
+from src.document_detector import score_contour
 import config
 from src.transform import four_point_transform
 from src.document_detector import score_contour
@@ -42,6 +46,7 @@ class DocumentScanner:
         # Processing stages
         self.gray = None
         self.enhanced = None
+        self.corrected=None
         self.edged = None
         self.contour_image = None
 
@@ -53,6 +58,7 @@ class DocumentScanner:
 
         # Resize ratio
         self.ratio = 1.0
+        self.quality = None
 
     # --------------------------------------------------
 
@@ -85,52 +91,62 @@ class DocumentScanner:
     # --------------------------------------------------
 
     def preprocess(self):
-        """
-        Image enhancement before edge detection.
-        """
+            """
+            Enhance the image before document detection.
+            """
 
-        if self.image is None:
-            raise RuntimeError("Load an image first.")
+            if self.image is None:
+                raise RuntimeError("Load an image first.")
 
-        # Convert to grayscale
+            # Convert to grayscale
+            self.gray = cv2.cvtColor(
+                self.image,
+                cv2.COLOR_BGR2GRAY
+            )
 
-        self.gray = cv2.cvtColor(
-            self.image,
-            cv2.COLOR_BGR2GRAY
-        )
+            quality = ImageQuality(self.gray)
 
-        # CLAHE (better than equalizeHist)
+            report = quality.get_report()
 
-        clahe = cv2.createCLAHE(
-            clipLimit=config.CLAHE_CLIP_LIMIT,
-            tileGridSize=config.CLAHE_GRID_SIZE
-        )
+            params = enhancement_parameters(report)
 
-        self.enhanced = clahe.apply(self.gray)
+            clahe = cv2.createCLAHE(
 
-        # Noise reduction
+                clipLimit=params["clip_limit"],
 
-        self.enhanced = cv2.GaussianBlur(
-            self.enhanced,
-            config.GAUSSIAN_KERNEL,
-            0
-        )
+                tileGridSize=config.CLAHE_GRID_SIZE
+            )
 
-        # Sharpen image
+            self.enhanced = clahe.apply(self.gray)
 
-        blurred = cv2.GaussianBlur(
-            self.enhanced,
-            (0, 0),
-            3
-        )
+            # Reduce noise
+            self.enhanced = cv2.GaussianBlur(
+                self.enhanced,
+                config.GAUSSIAN_KERNEL,
+                0
+            )
 
-        self.enhanced = cv2.addWeighted(
-            self.enhanced,
-            1.5,
-            blurred,
-            -0.5,
-            0
-        )
+            # Sharpen image
+            blurred = cv2.GaussianBlur(
+                self.enhanced,
+                (0, 0),
+                3
+            )
+
+            amount = params["sharpen"]
+
+            self.enhanced = cv2.addWeighted(
+                self.enhanced,
+                amount,
+                blurred,
+                -(amount - 1),
+                0
+            )
+
+            # Analyze image quality
+            self.quality = ImageQuality(
+                self.enhanced
+            )
     # --------------------------------------------------
 
     def detect_edges(self):
@@ -178,101 +194,96 @@ class DocumentScanner:
         cv2.imwrite("images/output/debug_gray.jpg", self.enhanced)
 
     def find_document(self):
+            """
+            Detect the document using contour scoring.
+            """
 
-        contours = cv2.findContours(
-            self.edged.copy(),
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE
-        )
-
-        contours = imutils.grab_contours(contours)
-
-        print(f"\nFound {len(contours)} contours")
-
-        image_area = self.image.shape[0] * self.image.shape[1]
-
-        debug = self.image.copy()
-
-        contours = sorted(
-            contours,
-            key=cv2.contourArea,
-            reverse=True
-        )
-
-        best_candidate = None
-
-        for i, contour in enumerate(contours):
-
-            area = cv2.contourArea(contour)
-
-            candidate = score_contour(
-                contour,
-                image_area
+            contours = cv2.findContours(
+                self.edged.copy(),
+                cv2.RETR_EXTERNAL,
+                cv2.CHAIN_APPROX_SIMPLE
             )
 
-            if candidate is None:
-                continue
+            contours = imutils.grab_contours(contours)
 
-            print(
-                f"Contour {i+1} | "
-                f"Area = {int(area)} | "
-                f"Score = {candidate.score:.2f}"
+            print(f"\nFound {len(contours)} contours")
+
+            # Sort largest first
+            contours = sorted(
+                contours,
+                key=cv2.contourArea,
+                reverse=True
             )
 
-            color = (0, 255, 0)
+            image_area = self.image.shape[0] * self.image.shape[1]
 
-            if candidate.score > 70:
-                color = (0, 255, 255)
+            best_candidate = None
 
-            if candidate.score > 85:
+            debug = self.image.copy()
+
+            # Evaluate every contour
+            for i, contour in enumerate(contours):
+
+                area = cv2.contourArea(contour)
+
+                print(f"Contour {i+1}: area = {int(area)}")
+
+                candidate = score_contour(
+                    contour,
+                    image_area
+                )
+
                 color = (0, 0, 255)
 
+                if candidate is not None:
+
+                    color = (0, 255, 0)
+
+                    if (
+                        best_candidate is None or
+                        candidate.score > best_candidate.score
+                    ):
+                        best_candidate = candidate
+
+                cv2.drawContours(
+                    debug,
+                    [contour],
+                    -1,
+                    color,
+                    2
+                )
+
+            self.contour_image = debug
+
+            cv2.imwrite(
+                "images/output/debug_contours.jpg",
+                debug
+            )
+
+            if best_candidate is None:
+                raise RuntimeError(
+                    "Unable to detect document."
+                )
+
+            self.document_contour = best_candidate.approx
+
+            print("\nSelected Document")
+
+            print(
+                f"Score : {best_candidate.score:.2f}"
+            )
+
+            print(
+                f"Area  : {int(cv2.contourArea(best_candidate.contour))}"
+            )
+
             cv2.drawContours(
-                debug,
-                [candidate.contour],
+                self.contour_image,
+                [self.document_contour],
                 -1,
-                color,
-                2
+                (255, 0, 0),
+                4
             )
-
-            x, y, w, h = cv2.boundingRect(candidate.contour)
-
-            cv2.putText(
-                debug,
-                f"{candidate.score:.1f}",
-                (x, y - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                color,
-                2
-            )
-
-            if (
-                best_candidate is None or
-                candidate.score > best_candidate.score
-            ):
-                best_candidate = candidate
-
-        self.contour_image = debug
-
-        cv2.imwrite(
-            "images/output/debug_contours.jpg",
-            debug
-        )
-
-        if best_candidate is None:
-
-            raise RuntimeError(
-                "Unable to detect document."
-            )
-
-        self.document_contour = best_candidate.approx
-
-        print(
-            f"\nSelected contour "
-            f"(Score = {best_candidate.score:.2f})"
-        )
-        # --------------------------------------------------
 
     def scan(self):
         """
@@ -280,31 +291,86 @@ class DocumentScanner:
         a scanner-like black & white image.
         """
 
-        if self.document_contour is None:
-            raise RuntimeError("Document contour not found.")
-
-        self.scanned = four_point_transform(
+        warped = four_point_transform(
             self.original,
             self.document_contour.reshape(4, 2) * self.ratio
         )
+        self.corrected = self.remove_shadows(warped)
 
-        self.scanned = cv2.cvtColor(
-            self.scanned,
-            cv2.COLOR_BGR2GRAY
-        )
+        mode = config.SCAN_MODE.lower()
+        
 
-        threshold = threshold_local(
-            self.scanned,
-            config.THRESHOLD_BLOCK_SIZE,
-            offset=config.THRESHOLD_OFFSET,
-            method="gaussian"
-        )
+        if mode == "color":
 
-        self.scanned = (
-            self.scanned > threshold
-        ).astype("uint8") * 255
+            self.scanned = warped
+
+        elif mode == "gray":
+
+            self.scanned = self.corrected
+
+        else:
+
+            threshold = threshold_local(
+                self.corrected,
+                config.THRESHOLD_BLOCK_SIZE,
+                offset=config.THRESHOLD_OFFSET,
+                method="gaussian"
+            )
+
+            self.scanned = (
+                self.corrected > threshold
+            ).astype("uint8") * 255
+        print(f"Scan Mode: {config.SCAN_MODE.upper()}")   
         # --------------------------------------------------
+    def remove_shadows(self, image):
+        """
+        Correct uneven illumination in a scanned document.
 
+        A large Gaussian blur estimates the background illumination.
+        The original image is then normalized against this background
+        using OpenCV's divide operation.
+
+        Parameters
+        ----------
+        image : numpy.ndarray
+            Perspective-corrected document image.
+
+        Returns
+        -------
+        numpy.ndarray
+            Grayscale image with more uniform illumination.
+        """
+
+        # Convert to grayscale if required
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image.copy()
+
+        # Estimate illumination background
+        background = cv2.GaussianBlur(
+            gray,
+            config.BACKGROUND_BLUR_KERNEL,
+            0
+        )
+
+        # Normalize illumination
+        self.corrected = cv2.divide(
+            gray,
+            background,
+            scale=255
+        )
+
+        # Stretch intensity range
+        self.corrected = cv2.normalize(
+            self.corrected,
+            None,
+            0,
+            255,
+            cv2.NORM_MINMAX
+        )
+
+        return self.corrected
     def save(self, filename=None):
         """
         Save scanned document.
@@ -342,27 +408,29 @@ class DocumentScanner:
 
     def show(self):
 
-        if self.scanned is None:
-            raise RuntimeError("Nothing to display.")
+        cv2.imshow(
+            "Original",
+            self.original
+        )
 
-        cv2.imshow("Scanned Document", self.scanned)
+        cv2.imshow(
+            "Scanned",
+            self.scanned
+        )
 
         cv2.waitKey(0)
-
         cv2.destroyAllWindows()
         # --------------------------------------------------
 
     def show_debug(self):
+        """
+        Display the complete document scanner processing pipeline.
+        """
 
         if self.image is None:
             return
 
         original = self.image.copy()
-
-        gray = cv2.cvtColor(
-            self.gray,
-            cv2.COLOR_GRAY2BGR
-        )
 
         enhanced = cv2.cvtColor(
             self.enhanced,
@@ -374,16 +442,29 @@ class DocumentScanner:
             cv2.COLOR_GRAY2BGR
         )
 
+        if self.corrected is not None:
+            corrected = cv2.cvtColor(
+                self.corrected,
+                cv2.COLOR_GRAY2BGR
+            )
+        else:
+            corrected = np.zeros_like(original)
+
         if self.contour_image is not None:
             contour = self.contour_image.copy()
         else:
             contour = original.copy()
 
         if self.scanned is not None:
-            scanned = cv2.cvtColor(
-                self.scanned,
-                cv2.COLOR_GRAY2BGR
-            )
+
+            if len(self.scanned.shape) == 2:
+                scanned = cv2.cvtColor(
+                    self.scanned,
+                    cv2.COLOR_GRAY2BGR
+                )
+            else:
+                scanned = self.scanned.copy()
+
         else:
             scanned = np.zeros_like(original)
 
@@ -391,8 +472,8 @@ class DocumentScanner:
 
         images = [
             original,
-            gray,
             enhanced,
+            corrected,
             edges,
             contour,
             scanned
@@ -405,8 +486,8 @@ class DocumentScanner:
 
         labels = [
             "Original",
-            "Gray",
             "Enhanced",
+            "Corrected",
             "Edges",
             "Contour",
             "Final Scan"
@@ -425,10 +506,53 @@ class DocumentScanner:
             )
 
         top = np.hstack(images[:3])
-
         bottom = np.hstack(images[3:])
 
         dashboard = np.vstack((top, bottom))
+
+        if self.quality:
+
+            report = self.quality.get_report()
+
+            cv2.putText(
+                dashboard,
+                f"Blur: {report['blur']}",
+                (20, dashboard.shape[0] - 70),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 0),
+                2
+            )
+
+            cv2.putText(
+                dashboard,
+                f"Brightness: {report['brightness']}",
+                (20, dashboard.shape[0] - 40),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 0),
+                2
+            )
+
+            cv2.putText(
+                dashboard,
+                f"Contrast: {report['contrast']}",
+                (20, dashboard.shape[0] - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 0),
+                2
+            )
+
+            cv2.putText(
+                dashboard,
+                "Adaptive Enhancement",
+                (dashboard.shape[1] - 260, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (0, 255, 255),
+                2
+            )
 
         cv2.imshow(
             "Document Scanner Pipeline",
@@ -436,5 +560,4 @@ class DocumentScanner:
         )
 
         cv2.waitKey(0)
-
         cv2.destroyAllWindows()

@@ -1,66 +1,65 @@
+from dataclasses import dataclass
+
 import cv2
 import numpy as np
 
 
-class DocumentCandidate:
+@dataclass
+class ContourCandidate:
 
-    def __init__(self, contour):
+    contour: np.ndarray
 
-        self.contour = contour
+    approx: np.ndarray
 
-        self.area = cv2.contourArea(contour)
-
-        self.score = 0
-
-        self.approx = None
+    score: float
 
 
 def score_contour(contour, image_area):
+    """
+    Score how likely a contour is to be a document.
 
-    candidate = DocumentCandidate(contour)
+    Higher score = better document candidate.
+    """
 
-    area_score = candidate.area / image_area
+    area = cv2.contourArea(contour)
 
-    perimeter = cv2.arcLength(contour, True)
+    # Ignore very small contours
+    if area < image_area * 0.10:
+        return None
 
-    approx = cv2.approxPolyDP(
+    perimeter = cv2.arcLength(
         contour,
-        0.03 * perimeter,
         True
     )
 
-    candidate.approx = approx
+    approx = cv2.approxPolyDP(
+        contour,
+        0.02 * perimeter,
+        True
+    )
 
-    # Ignore tiny contours
-
-    if candidate.area < image_area * 0.02:
+    # Documents should have four corners
+    if len(approx) != 4:
         return None
-
-    score = 0
-
-    # Area
-
-    score += min(area_score * 60, 60)
-
-    # Four corners
-
-    if len(approx) == 4:
-        score += 25
-
-    # Convex
-
-    if cv2.isContourConvex(approx):
-        score += 10
-
-    # Rectangle quality
 
     x, y, w, h = cv2.boundingRect(approx)
 
-    ratio = w / float(h)
+    aspect_ratio = w / float(h)
 
-    if 0.4 < ratio < 2.5:
-        score += 5
+    rectangularity = area / (w * h)
 
-    candidate.score = score
+    area_score = area / image_area
 
-    return candidate
+    ratio_score = 1 - abs(1.4 - aspect_ratio)
+
+    score = (
+        area_score * 2
+        + rectangularity
+        + ratio_score
+    )
+
+    return ContourCandidate(
+        contour=contour,
+        approx=approx,
+        score=score
+    )
