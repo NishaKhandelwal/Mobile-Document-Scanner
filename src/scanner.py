@@ -294,8 +294,10 @@ class DocumentScanner:
             self.original,
             self.document_contour.reshape(4, 2) * self.ratio
         )
+        corrected = self.remove_shadows(warped)
 
         mode = config.SCAN_MODE.lower()
+        
 
         if mode == "color":
 
@@ -303,27 +305,19 @@ class DocumentScanner:
 
         elif mode == "gray":
 
-            self.scanned = cv2.cvtColor(
-                warped,
-                cv2.COLOR_BGR2GRAY
-            )
+            self.scanned = corrected
 
         else:
 
-            gray = cv2.cvtColor(
-                warped,
-                cv2.COLOR_BGR2GRAY
-            )
-
             threshold = threshold_local(
-                gray,
+                corrected,
                 config.THRESHOLD_BLOCK_SIZE,
                 offset=config.THRESHOLD_OFFSET,
                 method="gaussian"
             )
 
             self.scanned = (
-                gray > threshold
+                corrected > threshold
             ).astype("uint8") * 255
         print(f"Scan Mode: {config.SCAN_MODE.upper()}")   
         # --------------------------------------------------
