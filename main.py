@@ -1,6 +1,6 @@
 from src.scanner import DocumentScanner
 import config
-
+import cv2
 def main(): 
 
     scanner = DocumentScanner()
@@ -14,9 +14,15 @@ def main():
     scanner.find_document()
 
     scanner.scan()
-    results = scanner.extract_text()
-    print(results)
+    scanner.extract_text()
+
     scanner.visualize_ocr()
+
+    cv2.imshow(
+        "OCR Visualization",
+        scanner.ocr_visualization
+    )
+        
 
     if config.DEBUG:
         scanner.show_debug()

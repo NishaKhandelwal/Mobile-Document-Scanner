@@ -664,13 +664,6 @@ class DocumentScanner:
             "Document Scanner Pipeline",
             dashboard
         )
-        if self.ocr_visualization is not None:
-
-            ocr = self.ocr_visualization.copy()
-
-        else:
-
-            ocr = np.zeros_like(original)
 
         cv2.waitKey(0)
         cv2.destroyAllWindows()
