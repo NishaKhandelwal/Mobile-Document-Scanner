@@ -5,51 +5,57 @@ OCR functionality using EasyOCR.
 """
 
 import easyocr
-import cv2
 
 
 class OCRProcessor:
     """
-    Extract text from scanned document images using EasyOCR.
+    Wrapper around EasyOCR.
+
+    Provides a clean interface for extracting
+    structured text from scanned documents.
     """
 
     def __init__(self):
         """
         Initialize the EasyOCR reader.
-
-        Supported languages:
-        - English
-        - Gujarati
         """
 
         self.reader = easyocr.Reader(
-            ["en", "gu"]
+            ["en"]
         )
 
     def extract_text(self, image):
         """
-        Perform OCR on a scanned document.
+        Perform OCR on an image.
 
         Parameters
         ----------
         image : numpy.ndarray
-            Scanned document image.
+            Image to process.
 
         Returns
         -------
         list
-            EasyOCR results in the form:
-            [(bounding_box, text, confidence), ...]
+            OCR results as structured dictionaries.
         """
 
-        if image is None:
-            raise ValueError("Input image cannot be None.")
+        raw_results = self.reader.readtext(image)
 
-        # EasyOCR accepts both grayscale and color images.
-        if len(image.shape) == 3:
-            image = cv2.cvtColor(
-                image,
-                cv2.COLOR_BGR2RGB
-            )
+        results = []
 
-        return self.reader.readtext(image)
+        for bbox, text, confidence in raw_results:
+
+            results.append({
+
+                "text": text,
+
+                "confidence": round(
+                    float(confidence),
+                    3
+                ),
+
+                "bbox": bbox
+
+            })
+
+        return results
