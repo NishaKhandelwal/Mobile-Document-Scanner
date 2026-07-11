@@ -22,6 +22,7 @@ def main():
         "OCR Visualization",
         scanner.ocr_visualization
     )
+    print(scanner.ocr.get_text(scanner.scanned))
         
 
     if config.DEBUG:

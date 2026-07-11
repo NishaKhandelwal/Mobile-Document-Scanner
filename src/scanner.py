@@ -371,6 +371,27 @@ class DocumentScanner:
         )
 
         return self.ocr_result
+    def get_text(self, image):
+        """
+        Extract plain text from an image.
+
+        Parameters
+        ----------
+        image : numpy.ndarray
+            Image to process.
+
+        Returns
+        -------
+        str
+            Recognized text separated by newlines.
+        """
+
+        results = self.extract_text(image)
+
+        return "\n".join(
+            result["text"]
+            for result in results
+        )
     def visualize_ocr(self):
         """
         Draw OCR detections on the scanned image.
