@@ -53,13 +53,13 @@ MORPH_KERNEL = (5, 5)
 MIN_DOCUMENT_AREA = 0.03
 
 # Approximation accuracy for contour simplification.
-POLYGON_APPROX_EPSILON = 0.03
+POLYGON_APPROX_EPSILON = 0.04
 
 
 # ==========================================================
 # SCAN ENHANCEMENT
 # ==========================================================
-
+ENABLE_SHADOW_REMOVAL = False
 # Adaptive Threshold parameters
 THRESHOLD_BLOCK_SIZE = 11
 THRESHOLD_OFFSET = 10
