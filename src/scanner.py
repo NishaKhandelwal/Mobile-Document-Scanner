@@ -15,6 +15,7 @@ Pipeline
 """
 
 import os
+from src.ocr import OCRProcessor
 import cv2
 from datetime import datetime
 import imutils
@@ -59,6 +60,11 @@ class DocumentScanner:
         # Resize ratio
         self.ratio = 1.0
         self.quality = None
+        # OCR processor
+        self.ocr = OCRProcessor()
+
+        # Latest OCR result
+        self.ocr_result = None
 
     # --------------------------------------------------
 
@@ -295,10 +301,32 @@ class DocumentScanner:
             self.original,
             self.document_contour.reshape(4, 2) * self.ratio
         )
-        self.corrected = self.remove_shadows(warped)
+        if len(warped.shape) == 3:
+            gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = warped.copy()
+
+       # Convert to grayscale for quality analysis
+        if len(warped.shape) == 3:
+            gray = cv2.cvtColor(
+                warped,
+                cv2.COLOR_BGR2GRAY
+            )
+        else:
+            gray = warped.copy()
+
+        quality = ImageQuality(gray)
+
+        # Apply shadow removal only when enabled and the document is dark.
+        if (
+            config.ENABLE_SHADOW_REMOVAL and
+            quality.brightness < config.LOW_BRIGHTNESS
+        ):
+            self.corrected = self.remove_shadows(warped)
+        else:
+            self.corrected = gray
 
         mode = config.SCAN_MODE.lower()
-        
 
         if mode == "color":
 
@@ -322,6 +350,26 @@ class DocumentScanner:
             ).astype("uint8") * 255
         print(f"Scan Mode: {config.SCAN_MODE.upper()}")   
         # --------------------------------------------------
+    def extract_text(self):
+        """
+        Extract text from the scanned document.
+
+        Returns
+        -------
+        list
+            EasyOCR results.
+        """
+
+        if self.scanned is None:
+            raise RuntimeError(
+                "Run scan() before OCR."
+            )
+
+        self.ocr_result = self.ocr.extract_text(
+            self.scanned
+        )
+
+        return self.ocr_result
     def remove_shadows(self, image):
         """
         Correct uneven illumination in a scanned document.

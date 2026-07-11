@@ -14,6 +14,9 @@ def main():
     scanner.find_document()
 
     scanner.scan()
+    results = scanner.extract_text()
+
+    print(results)
 
     if config.DEBUG:
         scanner.show_debug()
