@@ -15,8 +15,8 @@ def main():
 
     scanner.scan()
     results = scanner.extract_text()
-
     print(results)
+    scanner.visualize_ocr()
 
     if config.DEBUG:
         scanner.show_debug()

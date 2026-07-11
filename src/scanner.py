@@ -65,6 +65,7 @@ class DocumentScanner:
 
         # Latest OCR result
         self.ocr_result = None
+        self.ocr_visualization = None
 
     # --------------------------------------------------
 
@@ -370,6 +371,63 @@ class DocumentScanner:
         )
 
         return self.ocr_result
+    def visualize_ocr(self):
+        """
+        Draw OCR detections on the scanned image.
+        """
+
+        if self.scanned is None:
+            raise RuntimeError(
+                "Run scan() before OCR visualization."
+            )
+
+        if not self.ocr_result:
+            self.ocr_visualization = self.scanned.copy()
+            return self.ocr_visualization
+
+        if len(self.scanned.shape) == 2:
+            image = cv2.cvtColor(
+                self.scanned,
+                cv2.COLOR_GRAY2BGR
+            )
+        else:
+            image = self.scanned.copy()
+
+        for result in self.ocr_result:
+
+            bbox = result["bbox"]
+            text = result["text"]
+            confidence = result["confidence"]
+
+            points = np.array(
+                bbox,
+                dtype=np.int32
+            )
+
+            cv2.polylines(
+                image,
+                [points],
+                True,
+                (0, 255, 0),
+                2
+            )
+
+            x = int(points[0][0])
+            y = int(points[0][1]) - 10
+
+            cv2.putText(
+                image,
+                f"{text} ({confidence:.2f})",
+                (x, max(y, 20)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 0, 255),
+                2
+            )
+
+        self.ocr_visualization = image
+
+        return image
     def remove_shadows(self, image):
         """
         Correct uneven illumination in a scanned document.
@@ -606,6 +664,13 @@ class DocumentScanner:
             "Document Scanner Pipeline",
             dashboard
         )
+        if self.ocr_visualization is not None:
+
+            ocr = self.ocr_visualization.copy()
+
+        else:
+
+            ocr = np.zeros_like(original)
 
         cv2.waitKey(0)
         cv2.destroyAllWindows()
