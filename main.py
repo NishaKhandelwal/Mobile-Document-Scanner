@@ -14,6 +14,9 @@ def main():
     scanner.find_document()
 
     scanner.scan()
+    pdf_path = scanner.export_pdf()
+
+    print(f"PDF saved to: {pdf_path}")
     scanner.extract_text()
 
     scanner.visualize_ocr()
@@ -22,7 +25,7 @@ def main():
         "OCR Visualization",
         scanner.ocr_visualization
     )
-    print(scanner.ocr.get_text(scanner.scanned))
+
         
 
     if config.DEBUG:
