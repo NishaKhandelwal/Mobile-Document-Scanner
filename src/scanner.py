@@ -27,6 +27,7 @@ from src.quality import (
 )
 from src.document_detector import score_contour
 import config
+from src.pdf_utils import PDFExporter
 from src.transform import four_point_transform
 from src.document_detector import score_contour
 
@@ -62,6 +63,7 @@ class DocumentScanner:
         self.quality = None
         # OCR processor
         self.ocr = OCRProcessor()
+        self.pdf_exporter = PDFExporter()
 
         # Latest OCR result
         self.ocr_result = None
@@ -371,6 +373,49 @@ class DocumentScanner:
         )
 
         return self.ocr_result
+    def export_pdf(self, filename=None):
+        """
+        Export the scanned document as a PDF.
+        """
+
+        if self.scanned is None:
+            raise RuntimeError(
+                "Run scan() before exporting PDF."
+            )
+
+        image_path = os.path.join(
+            config.OUTPUT_DIR,
+            "__temp_scan.png"
+        )
+
+        cv2.imwrite(
+            image_path,
+            self.scanned
+        )
+
+        if filename is None:
+
+            timestamp = datetime.now().strftime(
+                "%Y%m%d_%H%M%S"
+            )
+
+            filename = (
+                f"{config.DEFAULT_OUTPUT_PREFIX}_"
+                f"{timestamp}"
+                f"{config.DEFAULT_PDF_EXTENSION}"
+            )
+
+        pdf_path = os.path.join(
+            config.OUTPUT_DIR,
+            filename
+        )
+
+        self.pdf_exporter.export(
+            image_path,
+            pdf_path
+        )
+
+        return pdf_path
     def get_text(self, image):
         """
         Extract plain text from an image.
