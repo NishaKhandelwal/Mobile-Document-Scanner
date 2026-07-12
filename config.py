@@ -75,6 +75,7 @@ BACKGROUND_BLUR_KERNEL = (31, 31)
 OUTPUT_DIR = "images/output"
 
 DEFAULT_OUTPUT_PREFIX = "scan"
+DEFAULT_PDF_EXTENSION = ".pdf"
 
 # Margin around the document in exported PDFs (points)
 PDF_MARGIN = 36

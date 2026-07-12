@@ -373,14 +373,9 @@ class DocumentScanner:
         )
 
         return self.ocr_result
-    def export_pdf(self, filename="scan.pdf"):
+    def export_pdf(self, filename=None):
         """
         Export the scanned document as a PDF.
-
-        Parameters
-        ----------
-        filename : str
-            Output PDF filename.
         """
 
         if self.scanned is None:
@@ -393,14 +388,26 @@ class DocumentScanner:
             "__temp_scan.png"
         )
 
-        pdf_path = os.path.join(
-            config.OUTPUT_DIR,
-            filename
-        )
-
         cv2.imwrite(
             image_path,
             self.scanned
+        )
+
+        if filename is None:
+
+            timestamp = datetime.now().strftime(
+                "%Y%m%d_%H%M%S"
+            )
+
+            filename = (
+                f"{config.DEFAULT_OUTPUT_PREFIX}_"
+                f"{timestamp}"
+                f"{config.DEFAULT_PDF_EXTENSION}"
+            )
+
+        pdf_path = os.path.join(
+            config.OUTPUT_DIR,
+            filename
         )
 
         self.pdf_exporter.export(
