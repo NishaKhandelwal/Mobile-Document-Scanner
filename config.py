@@ -76,7 +76,8 @@ OUTPUT_DIR = "images/output"
 
 DEFAULT_OUTPUT_PREFIX = "scan"
 
-
+# Margin around the document in exported PDFs (points)
+PDF_MARGIN = 36
 # ==========================================================
 # DEBUG
 # ==========================================================
