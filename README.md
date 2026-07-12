@@ -1,55 +1,128 @@
 # 📄 Mobile Document Scanner
 
-A Python-based Mobile Document Scanner that uses **OpenCV** and **Computer Vision** techniques to automatically detect, crop, and enhance documents from images. The application converts photos of documents into clean, high-quality scanned copies, similar to popular mobile scanning apps.
+A modular, production-inspired document scanner built with **Python** and **OpenCV**. The application automatically detects documents, corrects perspective distortion, enhances image quality, extracts text using OCR, and exports scanned documents as PDF files.
+
+Designed as a portfolio project to demonstrate practical computer vision techniques, clean software architecture, and modular Python development.
 
 ---
 
-## 🚀 Features
+## ✨ Features
 
-- 📷 Detects document boundaries automatically
-- ✂️ Crops documents using contour detection
-- 🔄 Corrects perspective distortion
-- 🖤 Converts documents into clean black-and-white scans
-- 📄 Produces scanner-like digital copies
-- ⚡ Fast and efficient image processing
+### 📑 Document Scanning
+- Automatic document boundary detection
+- Intelligent contour scoring for document selection
+- Perspective correction using four-point transformation
+- Multiple scan modes:
+  - Black & White
+  - Grayscale
+  - Color
+- Adaptive thresholding for scanner-quality output
+
+### 🖼️ Image Enhancement
+- CLAHE contrast enhancement
+- Adaptive preprocessing based on image quality
+- Gaussian noise reduction
+- Image sharpening
+- Shadow and illumination correction
+- Morphological operations for improved edge detection
+
+### 📊 Image Quality Analysis
+- Blur detection
+- Brightness analysis
+- Contrast analysis
+- Automatic preprocessing parameter adjustment
+
+### 🔍 OCR
+- Text extraction using EasyOCR
+- English language support
+- OCR visualization with detected text bounding boxes
+
+### 📄 PDF Export
+- Export scanned documents as PDF
+- Automatic page scaling while preserving aspect ratio
+- Configurable margins
+
+### 🛠️ Developer Features
+- Modular project architecture
+- Configurable processing pipeline
+- Debug dashboard showing every processing stage
+- Automatic output generation
 
 ---
 
-## 🛠️ Technologies Used
+# 🛠️ Technologies Used
 
-- Python
-- OpenCV
-- NumPy
-- scikit-image
-- imutils
+| Category | Technology |
+|----------|------------|
+| Language | Python |
+| Computer Vision | OpenCV |
+| Numerical Computing | NumPy |
+| Image Processing | scikit-image |
+| OCR | EasyOCR |
+| PDF Generation | ReportLab |
+| Utilities | imutils |
 
 ---
 
-## 📂 Project Structure
+# 📂 Project Structure
 
-```
+```text
 Mobile-Document-Scanner/
+
+├── assets/
+├── history/
+├── images/
+│   ├── input/
+│   └── output/
 │
-├── images/              # Sample input images
-├── output/              # Scanned output images
-├── scan.py              # Main application
-├── transform.py         # Perspective transformation utilities
+├── src/
+│   ├── scanner.py
+│   ├── transform.py
+│   ├── document_detector.py
+│   ├── quality.py
+│   ├── ocr.py
+│   ├── pdf_utils.py
+│   └── gui.py
+│
+├── config.py
+├── main.py
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## ⚙️ Installation
+# ⚙️ Installation
 
-### Clone the repository
+Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/mobile-document-scanner.git
-cd mobile-document-scanner
+git clone https://github.com/yourusername/Mobile-Document-Scanner.git
+
+cd Mobile-Document-Scanner
 ```
 
-### Install dependencies
+Create a virtual environment (recommended):
+
+```bash
+python -m venv .venv
+```
+
+Activate it
+
+Windows
+
+```bash
+.venv\Scripts\activate
+```
+
+Linux/macOS
+
+```bash
+source .venv/bin/activate
+```
+
+Install dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -57,95 +130,151 @@ pip install -r requirements.txt
 
 ---
 
-## ▶️ Usage
+# ▶️ Usage
 
-Run the scanner by providing an image path.
+Place an image inside
 
-```bash
-python scan.py --image images/document.jpg
+```
+images/input/
 ```
 
-The processed scanned image will be displayed and can be saved for later use.
+Run
+
+```bash
+python main.py
+```
+
+The application will
+
+- Detect the document
+- Correct perspective
+- Enhance the scan
+- Extract text
+- Export PDF
+- Save the scanned output
 
 ---
 
-## 🔍 How It Works
+# 🔄 Processing Pipeline
 
-The document scanner follows a simple image processing pipeline:
-
-1. Load the input image.
-2. Convert the image to grayscale.
-3. Apply Gaussian Blur to reduce noise.
-4. Detect edges using the Canny Edge Detector.
-5. Find contours and identify the document boundary.
-6. Perform a four-point perspective transform.
-7. Apply adaptive thresholding for a clean scanned effect.
-
----
-
-## 📸 Example Workflow
-
-**Input Image**
-- Photograph of a document captured from a mobile phone.
-
-⬇️
-
-**Processing**
-- Edge Detection
-- Contour Detection
-- Perspective Correction
-- Adaptive Thresholding
-
-⬇️
-
-**Output**
-- High-quality scanned document.
-
----
-
-## 💡 Future Enhancements
-
-- Optical Character Recognition (OCR)
-- PDF export
-- Batch document scanning
-- Automatic document cropping
-- Mobile application integration
-- Cloud storage support
+```
+Input Image
+      │
+      ▼
+Grayscale Conversion
+      │
+      ▼
+Image Quality Analysis
+      │
+      ▼
+Adaptive Enhancement
+(CLAHE + Blur + Sharpen)
+      │
+      ▼
+Edge Detection
+      │
+      ▼
+Morphological Operations
+      │
+      ▼
+Contour Scoring
+      │
+      ▼
+Perspective Transformation
+      │
+      ▼
+Shadow Removal
+      │
+      ▼
+Scan Mode
+(BW / Gray / Color)
+      │
+      ▼
+OCR
+      │
+      ▼
+PDF Export
+```
 
 ---
 
-## 🚧 Roadmap
+# 📸 Debug Dashboard
 
-- [x] Automatic document detection
-- [x] Perspective correction
-- [x] Scanner effect
+The project includes a built-in debug dashboard that displays every stage of the processing pipeline.
 
-### In Progress
+It visualizes:
 
-- [ ] Improved edge detection
-- [ ] Multiple scan modes
-- [ ] OCR support
-- [ ] PDF export
-- [ ] Desktop GUI
-- [ ] Webcam scanning
-- [ ] Batch processing
+- Original image
+- Enhanced image
+- Illumination corrected image
+- Edge detection
+- Selected contour
+- Final scanned output
 
-## 🎯 Learning Outcomes
-
-This project helped in understanding:
-
-- Image Processing fundamentals
-- Edge Detection
-- Contour Detection
-- Perspective Transformation
-- Adaptive Thresholding
-- OpenCV image manipulation
-- Computer Vision workflows
+This makes debugging and tuning preprocessing parameters much easier.
 
 ---
 
-## 👩‍💻 Author
+# 📄 Current Project Status
+
+| Module | Status |
+|---------|--------|
+| Project Structure | ✅ Complete |
+| Scanner Pipeline | ✅ Complete |
+| Perspective Transform | ✅ Complete |
+| Contour Detection | ✅ Complete |
+| Adaptive Enhancement | ✅ Complete |
+| Shadow Removal | ✅ Complete |
+| Image Quality Analysis | ✅ Complete |
+| OCR | ✅ Complete |
+| PDF Export | ✅ Complete |
+| GUI | 🚧 In Progress |
+| Testing | 🚧 In Progress |
+| Documentation | 🚧 In Progress |
+
+---
+
+# 🚀 Roadmap
+
+### Completed
+
+- ✅ Modular architecture
+- ✅ Perspective correction
+- ✅ Adaptive enhancement
+- ✅ Intelligent contour scoring
+- ✅ Multiple scan modes
+- ✅ OCR integration
+- ✅ PDF export
+- ✅ Shadow correction
+
+### Planned
+
+- Searchable PDFs
+- Desktop GUI
+- Batch scanning
+- Webcam support
+- Unit tests
+- GitHub Actions CI
+
+---
+
+# 🎯 Learning Outcomes
+
+This project demonstrates practical experience with
+
+- Computer Vision
+- Image Processing
+- OpenCV
+- OCR Integration
+- PDF Generation
+- Modular Python Architecture
+- Object-Oriented Programming
+- Software Engineering Best Practices
+
+---
+
+# 👩‍💻 Author
 
 **Nisha Khandelwal**
 
-If you found this project helpful, consider giving it a ⭐ on GitHub!
+If you found this project useful, consider giving it a ⭐ on GitHub.
