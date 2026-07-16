@@ -154,7 +154,8 @@ class ScannerGUI:
         ttk.Button(
             toolbar,
             text="Export PDF",
-            width=15
+            width=15,
+            command=self.export_pdf
         ).grid(
             row=0,
             column=3,
@@ -318,6 +319,32 @@ class ScannerGUI:
             text=""
 
         )
+    def export_pdf(self):
+        """
+        Export the scanned document as a PDF.
+        """
+
+        if self.scanner.scanned is None:
+
+            self.status.config(
+                text="Status : Scan a document first."
+            )
+
+            return
+
+        try:
+
+            pdf_path = self.scanner.export_pdf()
+
+            self.status.config(
+                text=f"Status : PDF saved to {pdf_path}"
+            )
+
+        except Exception as error:
+
+            self.status.config(
+                text=f"Status : {error}"
+            )
 
     def run(self):
 
