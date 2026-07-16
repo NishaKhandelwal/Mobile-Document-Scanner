@@ -6,7 +6,10 @@ Tkinter GUI for the Mobile Document Scanner.
 
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog
 
+from PIL import Image
+from PIL import ImageTk
 
 class ScannerGUI:
 
@@ -24,6 +27,9 @@ class ScannerGUI:
             1000,
             700
         )
+        self.image_path = None
+
+        self.preview_image = None
 
         self.root.columnconfigure(
             0,
@@ -116,7 +122,8 @@ class ScannerGUI:
         ttk.Button(
             toolbar,
             text="Open Image",
-            width=15
+            width=15,
+            command=self.open_image
         ).grid(
             row=0,
             column=0,
@@ -187,6 +194,59 @@ class ScannerGUI:
             sticky="ew",
             padx=5,
             pady=(10, 5)
+        )
+    def open_image(self):
+        """
+        Open an image from disk and display it.
+        """
+
+        path = filedialog.askopenfilename(
+
+            title="Select Document",
+
+            filetypes=[
+
+                ("Images", "*.jpg *.jpeg *.png *.bmp *.tif *.tiff")
+
+            ]
+
+        )
+
+        if not path:
+            return
+
+        self.image_path = path
+
+        self.display_image(path)
+
+        self.status.config(
+
+            text="Status : Image Loaded"
+
+        )
+
+
+    def display_image(self, path):
+        """
+        Display an image inside the preview area.
+        """
+
+        image = Image.open(path)
+
+        image.thumbnail(
+
+            (900, 520)
+
+        )
+
+        self.preview_image = ImageTk.PhotoImage(image)
+
+        self.preview.config(
+
+            image=self.preview_image,
+
+            text=""
+
         )
 
     def run(self):
