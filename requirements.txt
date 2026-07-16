@@ -3,3 +3,5 @@ numpy
 imutils
 scikit-image
 easyocr
+reportlab
+Pillow
