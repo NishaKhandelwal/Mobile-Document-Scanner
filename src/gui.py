@@ -10,6 +10,9 @@ from tkinter import filedialog
 from src.scanner import DocumentScanner
 from PIL import Image
 from PIL import ImageTk
+from tkinter import ttk
+from tkinter import filedialog
+from tkinter import messagebox
 
 class ScannerGUI:
 
@@ -144,7 +147,8 @@ class ScannerGUI:
         ttk.Button(
             toolbar,
             text="OCR",
-            width=15
+            width=15,
+            command=self.run_ocr
         ).grid(
             row=0,
             column=2,
@@ -338,6 +342,48 @@ class ScannerGUI:
 
             self.status.config(
                 text=f"Status : PDF saved to {pdf_path}"
+            )
+
+        except Exception as error:
+
+            self.status.config(
+                text=f"Status : {error}"
+            )
+    def run_ocr(self):
+        """
+        Extract text from the scanned document.
+        """
+
+        if self.scanner.scanned is None:
+
+            self.status.config(
+                text="Status : Scan a document first."
+            )
+
+            return
+
+        try:
+
+            results = self.scanner.extract_text()
+
+            if not results:
+
+                messagebox.showinfo(
+                    "OCR Result",
+                    "No text detected."
+                )
+
+            else:
+
+                text = "\n".join(results)
+
+                messagebox.showinfo(
+                    "OCR Result",
+                    text
+                )
+
+            self.status.config(
+                text="Status : OCR completed."
             )
 
         except Exception as error:
