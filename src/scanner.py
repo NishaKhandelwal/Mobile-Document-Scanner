@@ -29,7 +29,7 @@ from src.document_detector import score_contour
 import config
 from src.pdf_utils import PDFExporter
 from src.transform import four_point_transform
-from src.document_detector import score_contour
+
 
 
 class DocumentScanner:
@@ -199,8 +199,6 @@ class DocumentScanner:
         cv2.imwrite("images/output/debug_gray.jpg", self.enhanced)
         cv2.imwrite("images/output/debug_edges.jpg", self.edged)
             # --------------------------------------------------
-        cv2.imwrite("images/output/debug_edges.jpg", self.edged)
-        cv2.imwrite("images/output/debug_gray.jpg", self.enhanced)
 
     def find_document(self):
             """

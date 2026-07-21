@@ -10,8 +10,6 @@ from tkinter import filedialog
 from src.scanner import DocumentScanner
 from PIL import Image
 from PIL import ImageTk
-from tkinter import ttk
-from tkinter import filedialog
 from tkinter import messagebox
 
 class ScannerGUI:
@@ -257,11 +255,15 @@ class ScannerGUI:
         )
     def scan_document(self):
         """
-        Scan the selected document using the existing
-        DocumentScanner pipeline.
+        Scan the selected document using the DocumentScanner pipeline.
         """
 
         if self.image_path is None:
+
+            messagebox.showwarning(
+                "No Image Selected",
+                "Please open an image before scanning."
+            )
 
             self.status.config(
                 text="Status : Select an image first."
@@ -271,16 +273,10 @@ class ScannerGUI:
 
         try:
 
-            self.scanner.load_image(
-                self.image_path
-            )
-
+            self.scanner.load_image(self.image_path)
             self.scanner.preprocess()
-
             self.scanner.detect_edges()
-
             self.scanner.find_document()
-
             self.scanner.scan()
 
             self.scanned_image = self.scanner.scanned
@@ -292,6 +288,11 @@ class ScannerGUI:
             )
 
         except Exception as error:
+
+            messagebox.showerror(
+                "Scan Failed",
+                str(error)
+            )
 
             self.status.config(
                 text=f"Status : {error}"
@@ -331,6 +332,11 @@ class ScannerGUI:
 
         if self.scanner.scanned is None:
 
+            messagebox.showwarning(
+                "No Scan Available",
+                "Please scan a document before exporting."
+            )
+
             self.status.config(
                 text="Status : Scan a document first."
             )
@@ -341,11 +347,21 @@ class ScannerGUI:
 
             pdf_path = self.scanner.export_pdf()
 
+            messagebox.showinfo(
+                "PDF Exported",
+                f"PDF saved successfully.\n\n{pdf_path}"
+            )
+
             self.status.config(
-                text=f"Status : PDF saved to {pdf_path}"
+                text="Status : PDF exported successfully."
             )
 
         except Exception as error:
+
+            messagebox.showerror(
+                "PDF Export Failed",
+                str(error)
+            )
 
             self.status.config(
                 text=f"Status : {error}"
@@ -416,6 +432,11 @@ class ScannerGUI:
 
         if self.scanner.scanned is None:
 
+            messagebox.showwarning(
+                "No Scan Available",
+                "Please scan a document before running OCR."
+            )
+
             self.status.config(
                 text="Status : Scan a document first."
             )
@@ -435,11 +456,9 @@ class ScannerGUI:
 
             else:
 
-                text = "\n".join(results)
-
                 messagebox.showinfo(
                     "OCR Result",
-                    text
+                    "\n".join(results)
                 )
 
             self.status.config(
@@ -448,10 +467,11 @@ class ScannerGUI:
 
         except Exception as error:
 
+            messagebox.showerror(
+                "OCR Failed",
+                str(error)
+            )
+
             self.status.config(
                 text=f"Status : {error}"
             )
-
-    def run(self):
-
-        self.root.mainloop()
