@@ -1,14 +1,15 @@
 # 📄 Mobile Document Scanner
 
-A modular, production-inspired document scanner built with **Python** and **OpenCV**. The application automatically detects documents, corrects perspective distortion, enhances image quality, extracts text using OCR, and exports scanned documents as PDF files.
+A modular, production-inspired document scanner built with **Python** and **OpenCV** that automatically detects documents, corrects perspective distortion, enhances image quality, extracts text using OCR, and exports scanned documents as PDF files.
 
-Designed as a portfolio project to demonstrate practical computer vision techniques, clean software architecture, and modular Python development.
+The project is designed as a portfolio-quality implementation to demonstrate practical **Computer Vision**, **Image Processing**, **OCR Integration**, and **Modular Software Architecture** using Python.
 
 ---
 
 ## ✨ Features
 
 ### 📑 Document Scanning
+
 - Automatic document boundary detection
 - Intelligent contour scoring for document selection
 - Perspective correction using four-point transformation
@@ -18,49 +19,86 @@ Designed as a portfolio project to demonstrate practical computer vision techniq
   - Color
 - Adaptive thresholding for scanner-quality output
 
+---
+
 ### 🖼️ Image Enhancement
-- CLAHE contrast enhancement
-- Adaptive preprocessing based on image quality
+
+- Adaptive CLAHE contrast enhancement
+- Image quality-aware preprocessing
 - Gaussian noise reduction
 - Image sharpening
-- Shadow and illumination correction
+- Automatic shadow and illumination correction
 - Morphological operations for improved edge detection
 
+---
+
 ### 📊 Image Quality Analysis
+
 - Blur detection
 - Brightness analysis
 - Contrast analysis
 - Automatic preprocessing parameter adjustment
 
-### 🔍 OCR
-- Text extraction using EasyOCR
+---
+
+### 🔍 Optical Character Recognition (OCR)
+
+- OCR using EasyOCR
 - English language support
-- OCR visualization with detected text bounding boxes
+- Extract recognized text from scanned documents
+- Modular OCR pipeline for future expansion
+
+---
 
 ### 📄 PDF Export
-- Export scanned documents as PDF
-- Automatic page scaling while preserving aspect ratio
-- Configurable margins
 
-### 🛠️ Developer Features
-- Modular project architecture
-- Configurable processing pipeline
-- Debug dashboard showing every processing stage
-- Automatic output generation
+- Export scanned documents as PDF
+- Automatic page scaling
+- Preserves document aspect ratio
+- Clean PDF generation using ReportLab
+
+---
+
+### 🖥️ Desktop GUI
+
+Built with Tkinter.
+
+Features include:
+
+- Open Image
+- Live Preview
+- Scan Document
+- OCR
+- Export PDF
+- Save Scanned Image
+- Status Bar
+- User-friendly error dialogs
+
+---
+
+### 🏗️ Architecture Highlights
+
+- Modular backend architecture
+- Thin GUI with separated processing logic
+- Configurable image processing pipeline
+- Reusable scanner components
+- Debug visualization for every processing stage
 
 ---
 
 # 🛠️ Technologies Used
 
 | Category | Technology |
-|----------|------------|
+|-----------|------------|
 | Language | Python |
 | Computer Vision | OpenCV |
 | Numerical Computing | NumPy |
 | Image Processing | scikit-image |
 | OCR | EasyOCR |
 | PDF Generation | ReportLab |
+| GUI | Tkinter |
 | Utilities | imutils |
+| Image Display | Pillow |
 
 ---
 
@@ -77,14 +115,15 @@ Mobile-Document-Scanner/
 │
 ├── src/
 │   ├── scanner.py
-│   ├── transform.py
 │   ├── document_detector.py
+│   ├── transform.py
 │   ├── quality.py
 │   ├── ocr.py
 │   ├── pdf_utils.py
 │   └── gui.py
 │
 ├── config.py
+├── gui_main.py
 ├── main.py
 ├── requirements.txt
 └── README.md
@@ -94,35 +133,32 @@ Mobile-Document-Scanner/
 
 # ⚙️ Installation
 
-Clone the repository:
+Clone the repository
 
 ```bash
 git clone https://github.com/yourusername/Mobile-Document-Scanner.git
-
 cd Mobile-Document-Scanner
 ```
 
-Create a virtual environment (recommended):
+Create a virtual environment
 
 ```bash
 python -m venv .venv
 ```
 
-Activate it
-
-Windows
+### Windows
 
 ```bash
 .venv\Scripts\activate
 ```
 
-Linux/macOS
+### Linux / macOS
 
 ```bash
 source .venv/bin/activate
 ```
 
-Install dependencies
+Install the dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -132,26 +168,20 @@ pip install -r requirements.txt
 
 # ▶️ Usage
 
-Place an image inside
-
-```
-images/input/
-```
-
-Run
+Run the desktop application
 
 ```bash
-python main.py
+python gui_main.py
 ```
 
-The application will
+Workflow
 
-- Detect the document
-- Correct perspective
-- Enhance the scan
-- Extract text
-- Export PDF
-- Save the scanned output
+1. Open an image.
+2. Scan the document.
+3. Review the processed output.
+4. Run OCR (optional).
+5. Export the scan as PDF.
+6. Save the scanned image.
 
 ---
 
@@ -193,29 +223,44 @@ Scan Mode
 OCR
       │
       ▼
-PDF Export
+PDF Export / Save Output
 ```
 
 ---
 
-# 📸 Debug Dashboard
+# 📸 Screenshots
 
-The project includes a built-in debug dashboard that displays every stage of the processing pipeline.
+Screenshots and a demo GIF will be added in a future update.
 
-It visualizes:
+Planned screenshots:
 
-- Original image
-- Enhanced image
-- Illumination corrected image
-- Edge detection
-- Selected contour
-- Final scanned output
-
-This makes debugging and tuning preprocessing parameters much easier.
+- Home Screen
+- Image Loaded
+- Document Detection
+- Final Scanned Output
+- OCR Result
+- PDF Export
 
 ---
 
-# 📄 Current Project Status
+# 🧪 Debug Dashboard
+
+The scanner includes a built-in debugging dashboard for visualizing each stage of the processing pipeline.
+
+Displays
+
+- Original Image
+- Enhanced Image
+- Shadow Corrected Image
+- Edge Detection
+- Selected Contour
+- Final Scan
+
+This greatly simplifies tuning preprocessing parameters and debugging document detection.
+
+---
+
+# 📈 Project Status
 
 | Module | Status |
 |---------|--------|
@@ -228,33 +273,34 @@ This makes debugging and tuning preprocessing parameters much easier.
 | Image Quality Analysis | ✅ Complete |
 | OCR | ✅ Complete |
 | PDF Export | ✅ Complete |
-| GUI | 🚧 In Progress |
-| Testing | 🚧 In Progress |
-| Documentation | 🚧 In Progress |
+| Desktop GUI | ✅ Complete |
+| Save Integration | ✅ Complete |
+| Error Handling | ✅ Complete |
+| Documentation | ✅ Complete |
+
+**Version 1 Status:** ✅ Complete
 
 ---
 
-# 🚀 Roadmap
+# 🚀 Future Enhancements (Version 2)
 
-### Completed
+The current project focuses on a robust single-document scanning workflow.
 
-- ✅ Modular architecture
-- ✅ Perspective correction
-- ✅ Adaptive enhancement
-- ✅ Intelligent contour scoring
-- ✅ Multiple scan modes
-- ✅ OCR integration
-- ✅ PDF export
-- ✅ Shadow correction
+Possible future improvements include:
 
-### Planned
-
-- Searchable PDFs
-- Desktop GUI
-- Batch scanning
-- Webcam support
-- Unit tests
-- GitHub Actions CI
+- Searchable PDFs with embedded OCR text
+- Batch document scanning
+- Multi-page PDF generation
+- Webcam / live document scanning
+- Drag-and-drop image support
+- Manual corner adjustment
+- Automatic document cropping suggestions
+- AI-assisted document detection
+- Image rotation and deskew
+- OCR text editing before export
+- Cloud storage integration
+- Web-based interface using Flask or FastAPI
+- Cross-platform desktop packaging
 
 ---
 
@@ -267,14 +313,34 @@ This project demonstrates practical experience with
 - OpenCV
 - OCR Integration
 - PDF Generation
+- Software Engineering
 - Modular Python Architecture
 - Object-Oriented Programming
-- Software Engineering Best Practices
+- GUI Development
+- Clean Code Principles
+
+---
+
+# 🤝 Contributing
+
+Contributions, suggestions, and improvements are welcome.
+
+Feel free to fork the repository and submit a pull request.
+
+---
+
+# 📄 License
+
+This project is licensed under the MIT License.
 
 ---
 
 # 👩‍💻 Author
 
 **Nisha Khandelwal**
+
+Computer Science Engineering Student
+
+This project was built as a portfolio project to explore practical applications of Computer Vision, OCR, and image processing using Python.
 
 If you found this project useful, consider giving it a ⭐ on GitHub.
