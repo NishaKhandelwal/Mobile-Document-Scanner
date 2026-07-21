@@ -169,7 +169,8 @@ class ScannerGUI:
         ttk.Button(
             toolbar,
             text="Save",
-            width=15
+            width=15,
+            command=self.save_image
         ).grid(
             row=0,
             column=4,
@@ -345,6 +346,65 @@ class ScannerGUI:
             )
 
         except Exception as error:
+
+            self.status.config(
+                text=f"Status : {error}"
+            )
+    def save_image(self):
+        """
+        Save the scanned document to a user-selected location.
+        """
+
+        if self.scanner.scanned is None:
+
+            messagebox.showwarning(
+                "No Scan Available",
+                "Please scan a document before saving."
+            )
+
+            self.status.config(
+                text="Status : Scan a document first."
+            )
+
+            return
+
+        file_path = filedialog.asksaveasfilename(
+
+            title="Save Scanned Document",
+
+            defaultextension=".jpg",
+
+            filetypes=[
+                ("JPEG Image", "*.jpg"),
+                ("PNG Image", "*.png"),
+                ("Bitmap Image", "*.bmp"),
+                ("All Files", "*.*")
+            ]
+
+        )
+
+        if not file_path:
+            return
+
+        try:
+
+            self.scanner.save(file_path)
+
+            messagebox.showinfo(
+                "Save Successful",
+                f"Document saved successfully.\n\n{file_path}"
+            )
+
+            self.status.config(
+                text="Status : Document saved successfully."
+            )
+
+        except Exception as error:
+
+            messagebox.showerror(
+                "Save Failed",
+                str(error)
+            )
 
             self.status.config(
                 text=f"Status : {error}"
